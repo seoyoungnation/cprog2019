@@ -23,6 +23,6 @@ void print_array(int* arr){
 
 void sum_array(int* arr, int* psum){
 	for (int i = 0; i < SIZE; i++) 
-		*psum += arr[i];
+		*psum += *(arr+i);
 }
 	
