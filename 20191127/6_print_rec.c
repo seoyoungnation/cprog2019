@@ -19,16 +19,17 @@ int main() {
 
 int compare(struct rect x, struct rect y) { 
 	int a, b;
+
 	a = x.w * x.h;
 	b = y.w * y.h;
-
-	return a > b ? 1 : 0;
+	
+	return a - b;
 	}
 
 void print_rect(struct rect a, struct rect b, int (*func)(struct rect, struct rect)) {
 	printf("Result\n");
 
-	if (func(a, b))
+	if (func(a, b) > 0)
 		printf("(%d,%d) (%d,%d)\n", a.w, a.h, b.w, b.h);
 	else
 		printf("(%d,%d) (%d,%d)\n", b.w, b.h, a.w, a.h);
