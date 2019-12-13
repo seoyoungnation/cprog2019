@@ -27,6 +27,7 @@ void print_att(node_t *);
 void check_attendance(char*, node_t*, node_t* (*func) (char*, node_t*));
 node_t* search_node (char*, node_t*); 
 void progress_mode(node_t*, node_t* (*func) (char*, node_t*));
+void backup(FILE*, node_t**);
 void close(node_t**);
 void myflush();
 
@@ -54,14 +55,13 @@ void main() {
 				progress_mode(list_head, search_node);
 					break;
 			case BACKUP: //BACKUP
+				backup(fp, &list_head);
 					break;
 			case QUIT:
-				printf("Quit\n"); 
-				printf("=======================\n");
+				printf("Quit\n\n"); 
 				break;
 			default:
-				printf("Unvalid Mode\n");
-				printf("=======================\n");
+				printf("Unvalid Mode\n\n");
 				break;
 		}
 
@@ -84,11 +84,7 @@ void file_manage(FILE* fp, node_t** list_head){
 	//read the file
 	while(!feof(fp)) {
 		new_node = (node_t*) malloc (sizeof(node_t));
-		fscanf(fp, "%s %s %d %s\n", new_node->name, new_node->school, &new_node->age, new_node->phone);
-
-		strcpy(new_node->book, "NULL");
-		new_node->attendance = NONE;
-		new_node->page = 0;
+		fscanf(fp, "%s %s %d %s %d %s %d", new_node->name, new_node->school, &new_node->age, new_node->phone, &new_node->attendance, new_node->book, &new_node->page); 
 
 		//adding nodes
 		new_node->next = *list_head;
@@ -99,25 +95,44 @@ void file_manage(FILE* fp, node_t** list_head){
 	return;
 }
 
+void backup(FILE* fp, node_t** list_head){
+	node_t* tmp_node;
+	
+	fp = fopen ("data.dat", "w+");
+	if (fp == NULL) {
+		printf("File Opening Error\n");
+		return;
+	}
+
+	while(*list_head) {
+		tmp_node = *list_head;
+		*list_head = (*list_head)->next;
+		fprintf(fp, "%s %s %d %s %d %s %d\n", tmp_node->name, tmp_node->school, tmp_node->age, tmp_node->phone, tmp_node->attendance, tmp_node->book, tmp_node->page); 
+	}
+
+	fclose(fp);
+	printf("\nFile Saved!\n");
+}
+
 void mode_select(int* mode) {
 
-	printf("=======================\n");
+	printf("\n");
 	printf("1. Search Student\n");
 	printf("2. Check Attendance\n");
 	printf("3. Check Progress\n");
 	printf("4. Back Up\n");  
 	printf("5. Quit\n");  
-	printf("=======================\n");
+	printf("\n");
 	printf("Select: ");
 	scanf("%d", mode);
-	printf("=======================\n");
+	printf("\n");
 	return;
 }
 
 void search_name(char* name){
 	printf("Type Name: ");
 	scanf("%s", name);
-	printf("=======================\n");
+	printf("\n");
 }
 
 void print_res(char* name, node_t* list_head, node_t* (*func) (char*, node_t*)){
@@ -159,11 +174,11 @@ void check_attendance(char* name, node_t* list_head, node_t* (*func) (char*, nod
 		tmp_node = func(name, list_head);
 		printf("Name: %s\n", tmp_node->name);
 		print_att(tmp_node);
-		printf("=======================\n");
+		printf("\n");
 		printf("1: ATTEND, 2: TARDY, 3: ABSENCE, 0: NONE\n");
 		printf("Type status: ");
 		scanf("%d", &stat);
-		printf("=======================\n");
+		printf("\n");
 		tmp_node->attendance = stat;
 		print_att(tmp_node);
 	}
@@ -181,10 +196,10 @@ void progress_mode(node_t* list_head, node_t* (*func) (char*, node_t*)){
 
 	printf("1. Change Book Name\n");
 	printf("2. Modify Page\n");
-	printf("=======================\n");
+	printf("\n");
 	printf("Type mode: ");
 	scanf("%d", &mode);
-	printf("=======================\n");
+	printf("\n");
 	search_name(name);
 
 	if (func(name, list_head) != NULL) {
@@ -195,13 +210,13 @@ void progress_mode(node_t* list_head, node_t* (*func) (char*, node_t*)){
 				scanf("%s", book);
 				strcpy(tmp_node->book, book);
 				myflush();
-				printf("=======================\n");
+				printf("\n");
 			case 2:
 				printf("Current Book Page: %d\n", tmp_node->page);
 				printf("Type Last Page: ");
 				scanf("%d", &page);
 				tmp_node->page = page;
-				printf("=======================\n");
+				printf("\n");
 				break;
 			default:
 				printf("Invalid Mode\n");
@@ -209,7 +224,7 @@ void progress_mode(node_t* list_head, node_t* (*func) (char*, node_t*)){
 			}
 		printf("Book: %s\n", tmp_node->book);
 		printf("Page: %d\n", tmp_node->page);
-		printf("=======================\n");
+		printf("\n");
 		}
 	else {
 		printf("No Result\n");
