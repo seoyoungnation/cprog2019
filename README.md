@@ -1,4 +1,5 @@
-#freshman_project
-##2019 SSU SSS C Programming Project
+# Student_Manage_Program
+2019 SSU SSS C Programming Project
 
+## Functions
 
