@@ -1,5 +1,6 @@
 all: 
 	gcc -o manage student_manage.c
-	
+	./manage	
+
 clean:
-	rm -f *o manage
+	rm -f *.o manage

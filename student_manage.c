@@ -3,7 +3,7 @@
 #include<string.h>
 
 enum ATTNENDANCE { NONE, ATTEND, TARDY, ABSENCE };
-enum MODE { SEARCH=1, ATTENDANCE, PROGRESS, BACKUP, QUIT };
+enum MODE { ADD, LIST, SEARCH, ATTENDANCE, PROGRESS, BACKUP, QUIT };
 
 typedef struct student {
 	char name[20];
@@ -19,16 +19,18 @@ typedef struct student {
 	struct student* next;
 }node_t;
 
-void file_manage(FILE*, node_t**);
-void mode_select(int*);
-void search_name(char*);
+void new_student(node_t**);
+node_t* file_manage(FILE*, node_t*);
+void mode_select(int*, char*);
+void show_list(node_t*);
 void print_res(char*, node_t*, node_t* (*func)(char*, node_t*));
 void print_att(node_t *);
 void check_attendance(char*, node_t*, node_t* (*func) (char*, node_t*));
 node_t* search_node (char*, node_t*); 
-void progress_mode(node_t*, node_t* (*func) (char*, node_t*));
+void progress_mode(char*, node_t*, node_t* (*func) (char*, node_t*));
 void backup(FILE*, node_t**);
 void close(node_t**);
+void quit(FILE*, int*, node_t**);
 void myflush();
 
 void main() {
@@ -37,61 +39,106 @@ void main() {
 
 	int mode;
 	char name[20];
+	int chk = 0;
+	char save;
 
-	file_manage(fp, &list_head);
+	list_head = file_manage(fp, list_head);
 
 	while (1) {
-		mode_select(&mode);
+		mode_select(&mode, name);
 		switch (mode) {
+			case ADD:
+				new_student(&list_head);
+				break;
+			case LIST: 
+				show_list(list_head);
+				break;
 			case SEARCH: //SEARCH
-				search_name(name);
 				print_res(name, list_head, search_node);
 				break;
 			case ATTENDANCE: //ATTENDANCE
-				search_name(name);
 				check_attendance(name, list_head, search_node);
 				break;
 			case PROGRESS: //PROGRESS
-				progress_mode(list_head, search_node);
+				progress_mode(name, list_head, search_node);
 					break;
 			case BACKUP: //BACKUP
 				backup(fp, &list_head);
 					break;
 			case QUIT:
-				printf("Quit\n\n"); 
+				myflush();
+				scanf("%c", &save);
+				if (save == 'y')
+					backup(fp, &list_head);
+				chk = QUIT;
+				//quit(fp, &chk, &list_head);
+				printf("Quit\n\n");
+				//exit(0);
 				break;
 			default:
 				printf("Unvalid Mode\n\n");
 				break;
 		}
-
-		if (mode == QUIT)
+		if (chk == QUIT)
 			break;
 	}
 	close(&list_head);
 }
 
-void file_manage(FILE* fp, node_t** list_head){
+node_t* file_manage(FILE* fp, node_t* list_head){
 	node_t* new_node;
 
 	//opening file
 	fp = fopen ("data.dat", "r+");
 	if (fp == NULL) {
 		printf("File Opening Error\n");
-		return;
+		return NULL;
 	}
 
 	//read the file
-	while(!feof(fp)) {
+	while(1) {
 		new_node = (node_t*) malloc (sizeof(node_t));
 		fscanf(fp, "%s %s %d %s %d %s %d", new_node->name, new_node->school, &new_node->age, new_node->phone, &new_node->attendance, new_node->book, &new_node->page); 
-
+		if(feof(fp)!=0)
+			break;
 		//adding nodes
-		new_node->next = *list_head;
-		*list_head = new_node;
+		new_node->next = list_head;
+		list_head = new_node;
 	}
 
 	fclose(fp);
+	return list_head;
+}
+
+void new_student(node_t** list_head ){
+	node_t* new_node;
+
+	new_node = (node_t*) malloc (sizeof(node_t));
+
+	printf("Name: ");
+	scanf("%s", new_node->name);
+	printf("School: ");
+	scanf("%s", new_node->school);
+	printf("Age: ");
+	scanf("%d", &new_node->age);
+	printf("Phone: "); 
+	scanf("%s", new_node->phone);	
+
+	strcpy(new_node->book, "NULL");
+	new_node->attendance = NONE;
+	new_node->page = 1;	
+	new_node->next = *list_head;
+
+	*list_head = new_node;	
+	return;	
+}
+
+void show_list(node_t* list_head){
+	node_t* tmp = list_head;
+	while(tmp) {
+		printf("%s\n", tmp->name);
+		tmp = tmp->next;
+	}
 	return;
 }
 
@@ -103,36 +150,41 @@ void backup(FILE* fp, node_t** list_head){
 		printf("File Opening Error\n");
 		return;
 	}
-
 	while(*list_head) {
 		tmp_node = *list_head;
-		*list_head = (*list_head)->next;
 		fprintf(fp, "%s %s %d %s %d %s %d\n", tmp_node->name, tmp_node->school, tmp_node->age, tmp_node->phone, tmp_node->attendance, tmp_node->book, tmp_node->page); 
+		*list_head = (*list_head)->next;	
 	}
 
 	fclose(fp);
 	printf("\nFile Saved!\n");
 }
 
-void mode_select(int* mode) {
+void mode_select(int* mode, char* name) {
 
 	printf("\n");
-	printf("1. Search Student\n");
-	printf("2. Check Attendance\n");
-	printf("3. Check Progress\n");
-	printf("4. Back Up\n");  
-	printf("5. Quit\n");  
+
+	printf("0. Add New Student\n");
+	printf("1. Student List\n");
+	printf("2. Search Student\n");
+	printf("3. Check Attendance\n");
+	printf("4. Check Progress\n");
+	printf("5. Back Up\n");  
+	printf("6. Quit\n");  
 	printf("\n");
 	printf("Select: ");
 	scanf("%d", mode);
-	printf("\n");
+	switch(*mode) {
+	case 2:
+	case 3:
+	case 4:
+		printf("Type Name: ");
+		scanf("%s",name);
+		printf("\n");
+		break;
+	default: break;
+	}
 	return;
-}
-
-void search_name(char* name){
-	printf("Type Name: ");
-	scanf("%s", name);
-	printf("\n");
 }
 
 void print_res(char* name, node_t* list_head, node_t* (*func) (char*, node_t*)){
@@ -187,11 +239,10 @@ void check_attendance(char* name, node_t* list_head, node_t* (*func) (char*, nod
 	}
 }
 
-void progress_mode(node_t* list_head, node_t* (*func) (char*, node_t*)){
+void progress_mode(char* name, node_t* list_head, node_t* (*func) (char*, node_t*)){
 	int mode;
 	char book[20];
 	int page;
-	char name[20];
 	node_t* tmp_node;
 
 	printf("1. Change Book Name\n");
@@ -200,7 +251,6 @@ void progress_mode(node_t* list_head, node_t* (*func) (char*, node_t*)){
 	printf("Type mode: ");
 	scanf("%d", &mode);
 	printf("\n");
-	search_name(name);
 
 	if (func(name, list_head) != NULL) {
 		tmp_node = func(name, list_head);
@@ -255,5 +305,17 @@ void close(node_t** list_head){
 void myflush(){
 	char ch;
 	while ((ch = getchar()) != '\n') {;}
+	return;
+}
+
+void quit(FILE* fp, int* chk, node_t** list_head){
+	char save;
+	printf("Do you want to save before closing? [y/n] ");
+	scanf("%c", &save);
+	if (save != 'y' && save != 'n')
+		return;
+	else if (save == 'y')
+		backup(fp, list_head);
+	*chk = QUIT;
 	return;
 }
